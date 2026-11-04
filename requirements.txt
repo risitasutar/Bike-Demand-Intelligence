@@ -1,7 +1,7 @@
 streamlit==1.48.1
-pandas==2.3.1
+pandas==2.3.3
 numpy>=1.26,<3
-scikit-learn==1.7.1
+scikit-learn==1.7.2
 matplotlib>=3.8
 joblib==1.5.1
 scipy>=1.11
