@@ -48,10 +48,16 @@ bundle, hour = load()
 # ------------------------------------------------------------------ sidebar
 with st.sidebar:
     st.header("Settings")
-    today_text = st.text_input("Treat 'today' as (YYYY-MM-DD)", value=date.today().isoformat(),
-                               help="Used for 'today', 'tomorrow', 'Friday'... Enter a 2012 date to compare with recorded actuals.")
+    with st.form("date_form", border=False):
+        entered = st.text_input("Treat 'today' as (YYYY-MM-DD)",
+                                value=st.session_state.get("today_text", date.today().isoformat()),
+                                help="Used for 'today', 'tomorrow', 'Friday'... Enter a 2012 date to compare with recorded actuals.")
+        if st.form_submit_button("Enter", type="primary", use_container_width=True):
+            st.session_state["today_text"] = entered.strip()
+    today_text = st.session_state.get("today_text", date.today().isoformat())
     try:
         today = pd.Timestamp(today_text).date()
+        st.caption(f"Using 'today' = **{today:%a %d %b %Y}**")
     except (ValueError, TypeError):
         today = date.today()
         st.warning("Date not recognised, using today's date.")
