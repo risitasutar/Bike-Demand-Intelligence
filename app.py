@@ -25,6 +25,17 @@ import query_engine as qe  # noqa: E402
 
 st.set_page_config(page_title="Bike Demand Intelligence", page_icon="🚲", layout="wide")
 
+# Expander and sidebar arrows use plain-text glyphs, so they still render if the icon font fails to load
+st.markdown("""<style>
+[data-testid="stExpander"] summary [data-testid="stIconMaterial"],
+[data-testid="stSidebarCollapseButton"] [data-testid="stIconMaterial"],
+[data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"] {display: none;}
+[data-testid="stExpander"] summary::before {content: "▸"; margin-right: .5rem;}
+[data-testid="stExpander"] details[open] summary::before {content: "▾";}
+[data-testid="stSidebarCollapseButton"] button::before {content: "«"; font-size: 1.3rem;}
+[data-testid="stExpandSidebarButton"]::before {content: "»"; font-size: 1.3rem;}
+</style>""", unsafe_allow_html=True)
+
 EXAMPLES = [
     "How many bikes are expected to be rented tomorrow at 8 AM?",
     "What are the peak-demand hours on working days?",
