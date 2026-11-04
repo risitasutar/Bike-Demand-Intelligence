@@ -8,6 +8,7 @@ Run from the project folder:
 Ask questions in plain English. Answers come from the trained gradient-boosting model
 (models/best_model.joblib) and the 2011-2012 history - nothing is hard-coded.
 """
+import io
 import os
 import sys
 from datetime import date
@@ -47,8 +48,13 @@ bundle, hour = load()
 # ------------------------------------------------------------------ sidebar
 with st.sidebar:
     st.header("Settings")
-    today = st.date_input("Treat 'today' as", value=date.today(),
-                          help="Used for 'today', 'tomorrow', 'Friday'... Pick a 2012 date to compare with recorded actuals.")
+    today_text = st.text_input("Treat 'today' as (YYYY-MM-DD)", value=date.today().isoformat(),
+                               help="Used for 'today', 'tomorrow', 'Friday'... Enter a 2012 date to compare with recorded actuals.")
+    try:
+        today = pd.Timestamp(today_text).date()
+    except (ValueError, TypeError):
+        today = date.today()
+        st.warning("Date not recognised, using today's date.")
     trip = st.slider("Average trip time (minutes) - ASSUMPTION", 10, 45, 20, 5,
                      help="Not in the dataset. Used only to convert rentals/hour into bikes on the road (Little's law).")
     st.divider()
@@ -90,12 +96,17 @@ def render(ans: qe.Answer):
         for c, (label, value, helptext) in zip(cols, ans.metrics):
             c.metric(label, value, help=helptext or None)
     if ans.chart:
-        fig = qe.make_figure(ans.chart)
-        st.pyplot(fig, use_container_width=True)
-        plt.close(fig)
+        png = getattr(ans, "_png", None)
+        if png is None:
+            fig = qe.make_figure(ans.chart)
+            buf = io.BytesIO()
+            fig.savefig(buf, format="png", dpi=110, bbox_inches="tight")
+            plt.close(fig)
+            png = ans._png = buf.getvalue()
+        st.image(png, use_container_width=True)
     if ans.table is not None:
         with st.expander("Numbers behind the answer"):
-            st.dataframe(ans.table, use_container_width=True)
+            st.table(ans.table)
     with st.expander("How I understood your question"):
         st.table(pd.DataFrame({"value": {k: str(v) for k, v in ans.interpretation.items()}}))
     if ans.assumptions:
@@ -103,7 +114,7 @@ def render(ans: qe.Answer):
             st.markdown("\n".join(f"- {a}" for a in ans.assumptions))
 
 
-for q, ans in st.session_state["history"]:
+for q, ans in st.session_state["history"][-6:]:
     with st.chat_message("user"):
         st.markdown(q)
     with st.chat_message("assistant"):
